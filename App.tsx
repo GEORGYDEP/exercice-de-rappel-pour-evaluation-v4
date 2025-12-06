@@ -54,7 +54,7 @@ interface FinalReportProps {
 
 const FinalReport: React.FC<FinalReportProps> = ({ userEmail, levels, allAnswers, onPrint, onRestart }) => {
     return (
-        <div className="min-h-screen bg-slate-50 p-8 flex flex-col items-center animate-in fade-in duration-500 print:bg-white print:p-0">
+        <div className="min-h-screen bg-slate-50 p-8 flex flex-col items-center print:bg-white print:p-0">
             {/* En-tête visible uniquement à l'impression (fixe sur chaque page via CSS) */}
             <div id="print-header" className="print-block hidden border-b border-gray-300 pb-2 mb-4 w-full flex justify-between items-center text-xs">
                 <span className="font-bold uppercase">Dossier d'évaluation comptable</span>
@@ -65,8 +65,8 @@ const FinalReport: React.FC<FinalReportProps> = ({ userEmail, levels, allAnswers
             {/* Vue Ecran Fin (Non imprimée) */}
             <div className="bg-white p-8 rounded-xl shadow-xl max-w-2xl w-full text-center print-hidden mb-8">
                 <div className="inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full text-green-600 mb-6"><Trophy size={48} /></div>
-                <h1 className="text-3xl font-bold mb-4">Évaluation Terminée</h1>
-                <p className="mb-8 text-gray-600">Vous avez complété les 31 exercices.<br/>Cliquez ci-dessous pour générer et imprimer votre dossier complet.</p>
+                <h1 className="text-3xl font-bold mb-4">Évaluation Terminée !</h1>
+                <p className="mb-8 text-gray-600">Félicitations ! Vous avez complété tous les exercices.<br/>Cliquez ci-dessous pour générer et imprimer votre dossier complet.</p>
                 <div className="flex justify-center gap-4">
                     <button onClick={onPrint} className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg font-bold"><Printer size={20}/> Imprimer le dossier</button>
                     <button onClick={onRestart} className="bg-white border-2 border-slate-200 text-slate-700 px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition-colors font-bold"><RotateCcw size={20}/> Recommencer</button>
@@ -75,36 +75,42 @@ const FinalReport: React.FC<FinalReportProps> = ({ userEmail, levels, allAnswers
 
             {/* Contenu Imprimable (Dossier Complet) */}
             <div className="w-full max-w-4xl print-content">
-                {levels.map((level, i) => (
-                    <div key={level.id} className="mb-8 print-block no-break page-break border-b-2 border-dashed border-gray-300 pb-8">
-                        
-                        {/* Titre Exercice */}
-                        <div className="mb-6 border-l-4 border-slate-800 pl-4 py-2 bg-gray-100 break-inside-avoid">
-                            <h2 className="text-xl font-bold">Exercice {i+1} : {level.title}</h2>
-                            <p className="text-sm text-gray-600 italic">{level.description}</p>
+                {levels.map((level, i) => {
+                    const userAnswers = allAnswers[level.id] || {};
+                    return (
+                        <div key={level.id} className="mb-12 print-block no-break page-break border-b-2 border-dashed border-gray-300 pb-8 last:border-0">
+
+                            {/* Titre Exercice */}
+                            <div className="mb-6 border-l-4 border-slate-800 pl-4 py-2 bg-gray-100 break-inside-avoid">
+                                <h2 className="text-xl font-bold">Exercice {i+1} : {level.title}</h2>
+                                <p className="text-sm text-gray-600 italic">{level.description}</p>
+                            </div>
+
+                            {/* 1. DOCUMENT (ENONCE) */}
+                            <div className="mb-6 break-inside-avoid">
+                                {level.documents.map((d, docIdx) => <DocumentViewer key={docIdx} document={d} />)}
+                            </div>
+
+                            {/* 2. REPONSE ELEVE */}
+                            <div className="break-inside-avoid">
+                                <h3 className="font-bold text-sm uppercase text-slate-500 mb-2 border-b pb-1">Vos écritures :</h3>
+                                {level.requiredJournals.map((j, jIdx) => {
+                                    const rows = userAnswers[jIdx] || [];
+                                    return (
+                                        <JournalTable
+                                            key={jIdx}
+                                            type={j.type}
+                                            defaultDate={j.defaultDate}
+                                            rows={rows.length > 0 ? rows : []}
+                                            setRows={()=>{}}
+                                            readOnly={true}
+                                        />
+                                    );
+                                })}
+                            </div>
                         </div>
-                        
-                        {/* 1. DOCUMENT (ENONCE) */}
-                        <div className="mb-6 break-inside-avoid">
-                            {level.documents.map((d, docIdx) => <DocumentViewer key={docIdx} document={d} />)}
-                        </div>
-                        
-                        {/* 2. REPONSE ELEVE */}
-                        <div className="break-inside-avoid">
-                            <h3 className="font-bold text-sm uppercase text-slate-500 mb-2 border-b">Vos écritures :</h3>
-                            {level.requiredJournals.map((j, jIdx) => (
-                                <JournalTable 
-                                    key={jIdx} 
-                                    type={j.type} 
-                                    defaultDate={j.defaultDate} 
-                                    rows={allAnswers[level.id]?.[jIdx] || []} 
-                                    setRows={()=>{}} 
-                                    readOnly={true} 
-                                />
-                            ))}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
